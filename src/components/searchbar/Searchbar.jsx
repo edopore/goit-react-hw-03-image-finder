@@ -5,13 +5,14 @@ export default class searchbar extends Component {
     return (
       <div>
         <header className="Searchbar">
-          <form className="SearchForm">
+          <form className="SearchForm" onSubmit={this.props.query}>
             <button type="submit" className="SearchForm-button">
               <span className="button-label">Search</span>
             </button>
 
             <input
               className="SearchForm-input"
+              name="searchFormInput"
               type="text"
               autoComplete="off"
               autoFocus

@@ -1,28 +1,107 @@
-import Modal from './modal/Modal';
 import Loader from './loader/Loader';
 import ImageGallery from './imagegallery/ImageGallery';
-import ImageGalleryItem from './imageGalleryItem/ImageGalleryItem';
-import Button from './button/Button';
 import Searchbar from './searchbar/Searchbar';
+import { Component } from 'react';
+import Button from './button/Button';
+import Modal from './modal/Modal';
 
-const API_KEY = '42343056-d970fc336103e47429fc1ac41';
-
-export const App = () => {
-  function fetchAPI() {
-    fetch(
-      `https://pixabay.com/api/?q=sex&safesearch=true&page=1&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12`
-    )
-      .then(data => data.json())
-      .then(pic => console.log(pic));
+export class App extends Component {
+  constructor() {
+    super();
+    this.state = {
+      query: '',
+      img: '',
+      alt: '',
+      imageArray: [],
+      page: 1,
+      totalHits: 0,
+      totalPages: 0,
+      isLoading: false,
+      toggleModal: false,
+    };
+    this.getQueryParams = this.getQueryParams.bind(this);
+    this.updateGallery = this.updateGallery.bind(this);
+    this.handleImageView = this.handleImageView.bind(this);
   }
-  fetchAPI();
-  return (
-    <div>
-      <Searchbar></Searchbar>
-      <Loader></Loader>
-      <ImageGallery></ImageGallery>
-      <ImageGalleryItem></ImageGalleryItem>
-      <Button></Button>
-    </div>
-  );
-};
+  fetchAPI = query => {
+    const API_KEY = '42343056-d970fc336103e47429fc1ac41';
+    return fetch(
+      `https://pixabay.com/api/?q=${query}&safesearch=true&page=${this.state.page}&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12`
+    );
+  };
+
+  async getQueryParams(event) {
+    event.preventDefault();
+    this.setState({
+      query: event.target.searchFormInput.value,
+      page: 1,
+      isLoading: true,
+    });
+    const images = await this.getImages(event.target.searchFormInput.value);
+    console.log(images);
+    this.setState({
+      imageArray: [...images],
+    });
+    this.setState({ isLoading: false });
+  }
+  async updateGallery() {
+    this.setState({ page: this.state.page + 1 });
+    const newImages = await this.getImages(this.state.query);
+    this.setState({
+      imageArray: [...this.state.imageArray, ...newImages],
+    });
+  }
+  async getImages(fetchData) {
+    const response = await this.fetchAPI(fetchData);
+    const data = await response.json();
+    this.setState({
+      totalHits: data.total,
+      totalPages: Math.ceil(data.total / 12),
+    });
+    return data.hits;
+  }
+  handleImageView(event) {
+    event.preventDefault();
+    console.log(event.keyCode);
+    this.setState({
+      toggleModal: !this.state.toggleModal,
+      src: event.target.src,
+      alt: event.target.alt,
+    });
+  }
+  render() {
+    return (
+      <div>
+        <Searchbar query={this.getQueryParams}></Searchbar>
+        {this.state.isLoading ? (
+          <Loader></Loader>
+        ) : (
+          <ImageGallery
+            images={this.state.imageArray}
+            zoom={this.handleImageView}
+          ></ImageGallery>
+        )}
+        {this.state.totalHits > 12 &&
+        this.state.page < this.state.totalPages ? (
+          <div className="flex-center">
+            <Button
+              nameButton="Load More..."
+              handleButton={this.updateGallery}
+            />
+          </div>
+        ) : (
+          <></>
+        )}
+        {this.state.toggleModal ? (
+          <Modal
+            click={this.handleImageView}
+            src={this.state.src}
+            alt={this.state.alt}
+          ></Modal>
+        ) : (
+          <></>
+        )}
+      </div>
+    );
+  }
+}
