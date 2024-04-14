@@ -38,7 +38,6 @@ export class App extends Component {
       isLoading: true,
     });
     const images = await this.getImages(event.target.searchFormInput.value);
-    console.log(images);
     this.setState({
       imageArray: [...images],
     });
@@ -61,8 +60,6 @@ export class App extends Component {
     return data.hits;
   }
   handleImageView(event) {
-    event.preventDefault();
-    console.log(event.keyCode);
     this.setState({
       toggleModal: !this.state.toggleModal,
       src: event.target.src,
